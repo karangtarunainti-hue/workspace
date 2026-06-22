@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Kerja — Pos Komando Harian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0f12;--surface:#14171c;--surface-2:#1b1f25;
+    --border:#2a2f37;--border-soft:#20242b;
+    --text:#e8e6e1;--text-dim:#8b9099;--text-faint:#5b6068;
+    --accent:#f2a93b;--accent-dim:#3a3322;
+    --radius:0px;
+    --mono:'IBM Plex Mono',monospace;
+    --display:'Space Grotesk',sans-serif;
+    --body:'Inter',sans-serif;
+  }
+  body.dp-pagi{--accent:#f2a93b;--accent-dim:#3a3322}
+  body.dp-siang{--accent:#4fb0c6;--accent-dim:#1f3236}
+  body.dp-sore{--accent:#e8743b;--accent-dim:#3a2a1f}
+  body.dp-malam{--accent:#7c83e8;--accent-dim:#262a3a}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(circle at 12% 0%,color-mix(in srgb,var(--accent) 8%,transparent),transparent 45%),var(--bg);
+    color:var(--text);font-family:var(--body);min-height:100vh;transition:background 1.2s ease;
+  }
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer}
+  ::selection{background:var(--accent);color:#0d0f12}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px}
+
+  /* STATUS BAR */
+  .statusbar{border-bottom:1px solid var(--border);background:var(--surface);font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--text-dim);overflow:hidden;white-space:nowrap}
+  .statusbar-inner{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:9px 20px}
+  .statusbar .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;box-shadow:0 0 0 3px var(--accent-dim)}
+  .statusbar .seg{color:var(--text)}
+  .statusbar .seg b{color:var(--accent);font-weight:600}
+  .statusbar .sep{color:var(--text-faint)}
+
+  /* HERO */
+  .hero{padding:48px 0 28px;border-bottom:1px solid var(--border)}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-faint);margin:0 0 14px}
+  .eyebrow b{color:var(--accent)}
+  .greeting{font-family:var(--display);font-weight:700;font-size:44px;line-height:1.05;margin:0 0 18px;letter-spacing:-.01em}
+  .greeting .name{color:var(--accent)}
+  .quote-row{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;border-left:2px solid var(--accent);padding:2px 0 2px 16px}
+  .quote-text{font-size:16px;color:var(--text-dim);font-style:italic;margin:0;max-width:640px}
+  .quote-refresh{background:none;border:1px solid var(--border);color:var(--text-dim);font-size:11.5px;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;padding:7px 12px;white-space:nowrap;margin-top:2px}
+  .quote-refresh:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* INFO GRID */
+  .info-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:1px;background:var(--border);border:1px solid var(--border)}
+  .panel{background:var(--surface);padding:22px 24px}
+  .panel-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+  .panel-title{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint)}
+  .panel-refresh{background:none;border:none;color:var(--text-faint);font-family:var(--mono);font-size:11px;text-decoration:underline;padding:0;cursor:pointer}
+  .panel-refresh:hover{color:var(--accent)}
+
+  .weather-main{display:flex;align-items:baseline;gap:14px;margin-bottom:4px}
+  .weather-temp{font-family:var(--display);font-size:48px;font-weight:700;line-height:1}
+  .weather-cond{font-size:14px;color:var(--text-dim)}
+  .weather-sub{font-family:var(--mono);font-size:12px;color:var(--text-faint);display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
+  .weather-loc{font-size:12px;color:var(--text-faint);margin-top:14px}
+  .weather-error,.news-error{color:var(--text-faint);font-size:13px;line-height:1.6}
+  .news-error a,.weather-error a{text-decoration:underline;color:var(--text-dim)}
+  .news-error a:hover,.weather-error a:hover{color:var(--accent)}
+
+  .news-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:13px}
+  .news-item{border-bottom:1px solid var(--border-soft);padding-bottom:13px}
+  .news-item:last-child{border-bottom:none;padding-bottom:0}
+  .news-item a{font-size:14px;color:var(--text);line-height:1.4;display:block}
+  .news-item a:hover{color:var(--accent)}
+  .news-meta{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-top:4px;display:block}
+  .news-cached{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-top:12px;font-style:italic}
+  .skeleton{color:var(--text-faint);font-family:var(--mono);font-size:12.5px}
+
+  /* SECTIONS */
+  .section{margin-top:40px}
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:18px;flex-wrap:wrap}
+  .section-title{font-family:var(--mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--text);display:flex;align-items:center;gap:10px}
+  .section-title .idx{color:var(--accent)}
+  .section-count{color:var(--text-faint);font-weight:400}
+  .section-actions{display:flex;gap:10px}
+  .btn{background:none;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;padding:7px 13px;cursor:pointer}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-ghost{background:none;border:none;color:var(--text-faint);font-family:var(--mono);font-size:11.5px;text-decoration:underline;padding:7px 0;cursor:pointer}
+  .btn-ghost:hover{color:var(--accent)}
+
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1px;background:var(--border);border:1px solid var(--border)}
+  .card{background:var(--surface);padding:18px 18px 16px;position:relative;min-height:108px;display:flex;flex-direction:column;justify-content:space-between;transition:background .15s ease}
+  .card:hover{background:var(--surface-2)}
+  .card:hover .card-tools{opacity:1}
+  .card-link{display:block}
+  .card-icon{font-size:20px;margin-bottom:10px;display:block}
+  .card-title{font-size:14.5px;font-weight:500;color:var(--text);line-height:1.3;margin-bottom:4px;word-break:break-word}
+  .card-url{font-family:var(--mono);font-size:11px;color:var(--text-faint);word-break:break-all}
+  .card-tools{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:opacity .15s ease}
+  .card-tools button{background:var(--surface);border:1px solid var(--border);color:var(--text-faint);font-size:11px;width:22px;height:22px;line-height:1;cursor:pointer}
+  .card-tools button:hover{color:var(--accent);border-color:var(--accent)}
+  .add-card-tile{background:var(--surface);border:none;color:var(--text-faint);display:flex;align-items:center;justify-content:center;min-height:108px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;width:100%;cursor:pointer}
+  .add-card-tile:hover{color:var(--accent);background:var(--surface-2)}
+
+  /* MODAL */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+  .modal-backdrop.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);width:100%;max-width:420px;padding:26px}
+  .modal h3{font-family:var(--mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 18px;color:var(--text)}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase}
+  .field input,.field select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 10px;font-family:var(--body);font-size:14px}
+  .field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+  .btn-primary{background:var(--accent);color:#11131a;border:1px solid var(--accent);font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;padding:9px 16px;font-weight:600;cursor:pointer}
+  .btn-primary:hover{opacity:.85}
+  .btn-secondary{background:none;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:11.5px;padding:9px 16px;text-transform:uppercase;cursor:pointer}
+  .btn-secondary:hover{border-color:var(--text-dim)}
+
+  /* KONEKSI BANNER */
+  .conn-banner{
+    position:fixed;bottom:0;left:0;right:0;z-index:100;
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.05em;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    padding:10px 20px;
+    transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
+    pointer-events:none;
+  }
+  .conn-banner.show{transform:translateY(0);pointer-events:auto}
+  .conn-banner.offline{background:#1a0f0f;border-top:1px solid #5a1f1f;color:#f07070}
+  .conn-banner.online{background:#0f1a12;border-top:1px solid #1f5a2a;color:#6fcf80}
+  .conn-banner .conn-dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .conn-banner.offline .conn-dot{background:#e24b4a;box-shadow:0 0 0 3px rgba(226,75,74,.2)}
+  .conn-banner.online  .conn-dot{background:#6fcf80;box-shadow:0 0 0 3px rgba(111,207,128,.2)}
+  .conn-banner .conn-dismiss{background:none;border:1px solid currentColor;color:inherit;font-family:var(--mono);font-size:11px;padding:4px 10px;opacity:.7;margin-left:8px}
+  .conn-banner .conn-dismiss:hover{opacity:1}
+
+  /* STATUS BAR dot warna koneksi */
+  .dot-offline{background:#e24b4a!important;box-shadow:0 0 0 3px rgba(226,75,74,.2)!important}
+
+  footer{text-align:center;padding:34px 20px 10px;color:var(--text-faint);font-family:var(--mono);font-size:11px;letter-spacing:.04em}
+
+  @media(max-width:760px){
+    .info-grid{grid-template-columns:1fr}
+    .greeting{font-size:30px}
+    .statusbar-inner{overflow-x:auto}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body class="dp-pagi">
+
+<div class="statusbar">
+  <div class="statusbar-inner">
+    <span class="dot"></span>
+    <span class="seg" id="sbLoc">MAGETAN, JATIM</span>
+    <span class="sep">·</span>
+    <span class="seg" id="sbWeather">memuat cuaca…</span>
+    <span class="sep">·</span>
+    <span class="seg" id="sbDate">—</span>
+    <span class="sep">·</span>
+    <span class="seg"><b id="sbClock">00:00:00</b></span>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <p class="eyebrow">POS KOMANDO HARIAN · <b id="eyebrowDaypart">PAGI</b></p>
+    <h1 class="greeting" id="greetingText">Selamat Pagi, <span class="name">TOP</span>.</h1>
+    <div class="quote-row">
+      <p class="quote-text" id="quoteText">—</p>
+      <button class="quote-refresh" id="quoteRefreshBtn">Quote lain</button>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Cuaca — Magetan</span>
+        <button class="panel-refresh" id="weatherRefreshBtn">muat ulang</button>
+      </div>
+      <div id="weatherBody"><span class="skeleton">Mengambil data cuaca…</span></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Berita Sekitar Magetan</span>
+        <button class="panel-refresh" id="newsRefreshBtn">muat ulang</button>
+      </div>
+      <div id="newsBody"><span class="skeleton">Mengambil berita terbaru…</span></div>
+    </div>
+  </div>
+
+  <div id="sectionsRoot"></div>
+
+  <div style="margin-top:40px">
+    <button class="btn" id="addCategoryBtn">+ Tambah Kategori Baru</button>
+  </div>
+
+  <footer>DASHBOARD KERJA · DATA TERSIMPAN LOKAL DI BROWSER INI · TOP, MAGETAN</footer>
+</div>
+
+<!-- Banner koneksi -->
+<div class="conn-banner" id="connBanner">
+  <span class="conn-dot"></span>
+  <span id="connMsg">—</span>
+  <button class="conn-dismiss" id="connDismiss">tutup</button>
+</div>
+
+<!-- Modal: card -->
+<div class="modal-backdrop" id="cardModalBackdrop">
+  <div class="modal" id="cardModalBox">
+    <h3 id="cardModalTitle">Tambah Card</h3>
+    <input type="hidden" id="cardId">
+    <input type="hidden" id="cardCategoryField">
+    <div class="field">
+      <label for="cardTitleInput">Judul</label>
+      <input type="text" id="cardTitleInput" placeholder="Misal: Email Kantor, Berkas RAB, dsb">
+    </div>
+    <div class="field">
+      <label for="cardUrlInput">URL / tautan</label>
+      <input type="text" id="cardUrlInput" placeholder="https://...">
+    </div>
+    <div class="field">
+      <label for="cardIconInput">Ikon (emoji, opsional)</label>
+      <input type="text" id="cardIconInput" placeholder="📁 / 📊 / 🔗 / ✉️" maxlength="4">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cardModalCancel">Batal</button>
+      <button class="btn-primary" id="cardModalSave">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: kategori -->
+<div class="modal-backdrop" id="categoryModalBackdrop">
+  <div class="modal" id="categoryModalBox">
+    <h3>Kategori Baru</h3>
+    <div class="field">
+      <label for="categoryNameInput">Nama kategori</label>
+      <input type="text" id="categoryNameInput" placeholder="Misal: Riset, Klien, Keuangan">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="categoryModalCancel">Batal</button>
+      <button class="btn-primary" id="categoryModalSave">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ===== KONFIGURASI ===== */
+var LAT = -7.6428, LON = 111.3257;
+var LOC_NAME = "Magetan, Jawa Timur";
+var USER_NAME = "TOP";
+var STORAGE_KEY = "dashboard_kerja_v2";
+var NEWS_CACHE_KEY = "dashboard_news_cache_v1";
+var NEWS_CACHE_TTL = 30 * 60 * 1000; // 30 menit
+
+var QUOTES = [
+  "Selesaikan satu hal kecil dulu, momentum akan menyusul.",
+  "Bukan hari yang sempurna, tapi hari yang dikerjakan dengan niat.",
+  "Progres kecil yang konsisten mengalahkan rencana besar yang tertunda.",
+  "Kerjakan yang penting dulu, bukan yang ribut dulu.",
+  "Fokus satu layar, satu tugas — sisanya tunggu giliran.",
+  "Lelah itu wajar, berhenti total itu pilihan. Pilih lanjut sedikit lagi.",
+  "Hari ini cukup diisi satu langkah maju, bukan seluruh tangga.",
+  "Rapikan dulu yang di depan mata, baru pikirkan yang jauh.",
+  "Disiplin kecil hari ini, jadi hasil besar nanti.",
+  "Tidak harus cepat, asal terus bergerak.",
+  "Yang dikerjakan sekarang adalah hadiah untuk versi dirimu besok.",
+  "Mulai dari yang paling mudah dibuka — biar ritmenya kebentuk."
+];
+
+var WC = {
+  0:"Cerah",1:"Cerah Berawan",2:"Berawan Sebagian",3:"Mendung",
+  45:"Berkabut",48:"Berkabut Tebal",
+  51:"Gerimis Ringan",53:"Gerimis",55:"Gerimis Lebat",
+  61:"Hujan Ringan",63:"Hujan Sedang",65:"Hujan Lebat",
+  80:"Hujan Lokal Ringan",81:"Hujan Lokal",82:"Hujan Lokal Deras",
+  95:"Badai Petir",96:"Badai Petir + Es",99:"Badai Petir Lebat"
+};
+
+var MONTHS = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+var DAYS   = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+
+/* ===== UTILS ===== */
+function pad(n){ return n < 10 ? "0"+n : ""+n; }
+
+function esc(s){
+  if(!s) return "";
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function isValidUrl(s){
+  if(!s || s === "#") return false;
+  // native URL constructor — no regex, no escaping issues
+  try{ new URL(s); return true; }catch(e){ return false; }
+}
+
+function normalizeUrl(s){
+  if(!s) return "#";
+  s = s.trim();
+  if(s === "#" || s === "") return "#";
+  if(!s.match(/^https?:\/\//i)) s = "https://" + s;
+  return s;
+}
+
+function shortenUrl(url){
+  if(!url || url === "#") return "tautan belum diisi";
+  try{ return new URL(url).hostname.replace(/^www\./,""); }catch(e){ return url; }
+}
+
+/* ===== DATA ===== */
+var DEFAULT_DATA = {
+  categories:["Kerja","Pribadi","Referensi"],
+  items:[
+    {id:"c1",category:"Kerja",title:"Gmail / Email Kerja",url:"https://mail.google.com",icon:"✉️"},
+    {id:"c2",category:"Kerja",title:"Google Drive",url:"https://drive.google.com",icon:"📁"},
+    {id:"c3",category:"Pribadi",title:"Sinarkeu",url:"#",icon:"💰"},
+    {id:"c4",category:"Referensi",title:"GitHub",url:"https://github.com",icon:"🔗"}
+  ]
+};
+
+var data = (function(){
+  try{
+    var r = localStorage.getItem(STORAGE_KEY);
+    if(!r) return JSON.parse(JSON.stringify(DEFAULT_DATA));
+    var p = JSON.parse(r);
+    if(!p.categories || !p.items) return JSON.parse(JSON.stringify(DEFAULT_DATA));
+    return p;
+  }catch(e){ return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
+})();
+
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+/* ===== JAM & GREETING ===== */
+function daypart(h){
+  if(h>=5&&h<11) return {key:"pagi",label:"PAGI",greet:"Selamat Pagi"};
+  if(h>=11&&h<15) return {key:"siang",label:"SIANG",greet:"Selamat Siang"};
+  if(h>=15&&h<18) return {key:"sore",label:"SORE",greet:"Selamat Sore"};
+  return {key:"malam",label:"MALAM",greet:"Selamat Malam"};
+}
+
+function tick(){
+  var now = new Date();
+  var h = now.getHours();
+  var dp = daypart(h);
+  document.body.className = "dp-" + dp.key;
+  document.getElementById("eyebrowDaypart").textContent = dp.label;
+  document.getElementById("greetingText").innerHTML = dp.greet + ", <span class='name'>" + USER_NAME + "</span>.";
+  document.getElementById("sbClock").textContent = pad(h)+":"+pad(now.getMinutes())+":"+pad(now.getSeconds());
+  document.getElementById("sbDate").textContent = DAYS[now.getDay()]+", "+now.getDate()+" "+MONTHS[now.getMonth()]+" "+now.getFullYear();
+}
+tick();
+setInterval(tick, 1000);
+
+/* ===== QUOTE ===== */
+var lastQi = -1;
+function showQuote(){
+  var i;
+  do{ i = Math.floor(Math.random()*QUOTES.length); }while(i===lastQi && QUOTES.length>1);
+  lastQi = i;
+  document.getElementById("quoteText").textContent = "\u201C"+QUOTES[i]+"\u201D";
+}
+showQuote();
+document.getElementById("quoteRefreshBtn").addEventListener("click", showQuote);
+
+/* ===== CUACA ===== */
+function loadWeather(){
+  var body = document.getElementById("weatherBody");
+  body.innerHTML = "<span class='skeleton'>Mengambil data cuaca\u2026</span>";
+  document.getElementById("sbWeather").textContent = "memuat cuaca\u2026";
+
+  fetch("https://api.open-meteo.com/v1/forecast?latitude="+LAT+"&longitude="+LON+"&current_weather=true&timezone=Asia%2FJakarta")
+    .then(function(r){ if(!r.ok) throw new Error(); return r.json(); })
+    .then(function(json){
+      var cw = json.current_weather;
+      if(!cw) throw new Error();
+      var desc = WC[cw.weathercode] || "Tidak diketahui";
+      body.innerHTML =
+        "<div class='weather-main'><span class='weather-temp'>"+Math.round(cw.temperature)+"&deg;</span><span class='weather-cond'>"+esc(desc)+"</span></div>"+
+        "<div class='weather-sub'><span>angin "+Math.round(cw.windspeed)+" km/j</span></div>"+
+        "<div class='weather-loc'>"+esc(LOC_NAME)+"</div>";
+      document.getElementById("sbWeather").textContent = Math.round(cw.temperature)+"°C · "+desc;
+    })
+    .catch(function(){
+      body.innerHTML = "<div class='weather-error'>Data cuaca tidak bisa diambil. <a href='https://www.google.com/search?q=cuaca+magetan' target='_blank' rel='noopener'>Cek di Google</a>.</div>";
+      document.getElementById("sbWeather").textContent = "cuaca tidak tersedia";
+    });
+}
+loadWeather();
+document.getElementById("weatherRefreshBtn").addEventListener("click", loadWeather);
+setInterval(loadWeather, 10*60*1000);
+
+/* ===== BERITA (dengan cache localStorage 30 menit) ===== */
+function renderNews(items, fromCache, cacheTime){
+  var body = document.getElementById("newsBody");
+  var html = "<ul class='news-list'>";
+  items.slice(0,6).forEach(function(it){
+    var d = it.pubDate ? new Date(it.pubDate) : null;
+    var ds = d ? pad(d.getDate())+" "+MONTHS[d.getMonth()].slice(0,3) : "";
+    html += "<li class='news-item'><a href='"+esc(it.link)+"' target='_blank' rel='noopener'>"+esc(it.title)+"</a><span class='news-meta'>"+esc(ds)+"</span></li>";
+  });
+  html += "</ul>";
+  if(fromCache && cacheTime){
+    var ago = Math.round((Date.now()-cacheTime)/60000);
+    html += "<p class='news-cached'>cache "+ago+" menit lalu &mdash; <button class='panel-refresh' id='newsForceRefreshBtn'>perbarui</button></p>";
+  }
+  body.innerHTML = html;
+  if(fromCache){
+    var btn = document.getElementById("newsForceRefreshBtn");
+    if(btn) btn.addEventListener("click", function(){ loadNews(true); });
+  }
+}
+
+function loadNews(force){
+  var body = document.getElementById("newsBody");
+
+  // cek cache dulu
+  if(!force){
+    try{
+      var cached = localStorage.getItem(NEWS_CACHE_KEY);
+      if(cached){
+        var c = JSON.parse(cached);
+        if(c.time && (Date.now()-c.time) < NEWS_CACHE_TTL && c.items && c.items.length){
+          renderNews(c.items, true, c.time);
+          return;
+        }
+      }
+    }catch(e){}
+  }
+
+  body.innerHTML = "<span class='skeleton'>Mengambil berita terbaru\u2026</span>";
+
+  var rss = encodeURIComponent("https://news.google.com/rss/search?q=Magetan&hl=id-ID&gl=ID&ceid=ID:id");
+  fetch("https://api.rss2json.com/v1/api.json?rss_url="+rss)
+    .then(function(r){ if(!r.ok) throw new Error(); return r.json(); })
+    .then(function(json){
+      if(json.status!=="ok" || !json.items || !json.items.length) throw new Error();
+      // simpan cache
+      try{ localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify({time:Date.now(), items:json.items})); }catch(e){}
+      renderNews(json.items, false, null);
+    })
+    .catch(function(){
+      // coba tampilkan cache lama meski expired
+      try{
+        var cached = localStorage.getItem(NEWS_CACHE_KEY);
+        if(cached){
+          var c = JSON.parse(cached);
+          if(c.items && c.items.length){
+            renderNews(c.items, true, c.time);
+            return;
+          }
+        }
+      }catch(e){}
+      body.innerHTML = "<div class='news-error'>Berita tidak bisa diambil. Lihat langsung di <a href='https://news.google.com/search?q=Magetan&hl=id-ID' target='_blank' rel='noopener'>Google News &rarr; Magetan</a>.</div>";
+    });
+}
+loadNews();
+document.getElementById("newsRefreshBtn").addEventListener("click", function(){ loadNews(true); });
+setInterval(function(){ loadNews(); }, 30*60*1000);
+
+/* ===== RENDER SECTIONS ===== */
+var root = document.getElementById("sectionsRoot");
+
+function renderSections(){
+  root.innerHTML = "";
+  data.categories.forEach(function(cat, idx){
+    var items = data.items.filter(function(it){ return it.category===cat; });
+    var sec = document.createElement("div");
+    sec.className = "section";
+
+    var head = document.createElement("div");
+    head.className = "section-head";
+    head.innerHTML = "<span class='section-title'><span class='idx'>"+pad(idx+1)+"</span> "+esc(cat)+" <span class='section-count'>("+items.length+")</span></span>";
+
+    var actions = document.createElement("div");
+    actions.className = "section-actions";
+    if(data.categories.length > 1){
+      var del = document.createElement("button");
+      del.className = "btn-ghost";
+      del.textContent = "Hapus kategori";
+      del.addEventListener("click", function(){ delCategory(cat); });
+      actions.appendChild(del);
+    }
+    head.appendChild(actions);
+    sec.appendChild(head);
+
+    var grid = document.createElement("div");
+    grid.className = "card-grid";
+    items.forEach(function(item){ grid.appendChild(buildCard(item)); });
+
+    var addTile = document.createElement("button");
+    addTile.className = "add-card-tile";
+    addTile.textContent = "+ Tambah Card";
+    addTile.addEventListener("click", function(){ openCardModal(null, cat); });
+    grid.appendChild(addTile);
+
+    sec.appendChild(grid);
+    root.appendChild(sec);
+  });
+}
+
+function buildCard(item){
+  var card = document.createElement("div");
+  card.className = "card";
+  var a = document.createElement("a");
+  a.className = "card-link";
+  a.href = item.url || "#";
+  a.target = "_blank";
+  a.rel = "noopener";
+  a.innerHTML = "<span class='card-icon'>"+esc(item.icon||"🔗")+"</span><div class='card-title'>"+esc(item.title)+"</div><div class='card-url'>"+esc(shortenUrl(item.url))+"</div>";
+  card.appendChild(a);
+
+  var tools = document.createElement("div");
+  tools.className = "card-tools";
+  var eb = document.createElement("button");
+  eb.textContent = "✎"; eb.title = "Edit";
+  eb.addEventListener("click", function(e){ e.preventDefault(); openCardModal(item, item.category); });
+  var db = document.createElement("button");
+  db.textContent = "✕"; db.title = "Hapus";
+  db.addEventListener("click", function(e){ e.preventDefault(); delCard(item.id); });
+  tools.appendChild(eb); tools.appendChild(db);
+  card.appendChild(tools);
+  return card;
+}
+
+function delCard(id){
+  if(!confirm("Hapus card ini?")) return;
+  data.items = data.items.filter(function(it){ return it.id!==id; });
+  save(); renderSections();
+}
+
+function delCategory(cat){
+  if(!confirm("Hapus kategori '"+cat+"' beserta semua card di dalamnya?")) return;
+  data.categories = data.categories.filter(function(c){ return c!==cat; });
+  data.items = data.items.filter(function(it){ return it.category!==cat; });
+  save(); renderSections();
+}
+
+/* ===== MODAL HELPERS ===== */
+// Menutup modal hanya jika klik tepat di backdrop, bukan di dalam kotak modal
+function makeBackdropClose(backdropId, boxId, closeFn){
+  var backdrop = document.getElementById(backdropId);
+  var box = document.getElementById(boxId);
+  backdrop.addEventListener("click", function(e){
+    // e.target harus backdrop itu sendiri, bukan child-nya
+    if(e.target === backdrop) closeFn();
+  });
+  // pastikan klik di dalam modal tidak propagate keluar
+  if(box) box.addEventListener("click", function(e){ e.stopPropagation(); });
+}
+
+/* ===== MODAL: CARD ===== */
+var cardBackdrop = document.getElementById("cardModalBackdrop");
+
+function openCardModal(item, cat){
+  document.getElementById("cardModalTitle").textContent = item ? "Edit Card" : "Tambah Card \u2014 "+cat;
+  document.getElementById("cardId").value = item ? item.id : "";
+  document.getElementById("cardCategoryField").value = cat;
+  document.getElementById("cardTitleInput").value = item ? item.title : "";
+  document.getElementById("cardUrlInput").value = item ? (item.url==="?"||item.url==="#"?"":item.url) : "";
+  document.getElementById("cardIconInput").value = item ? (item.icon||"") : "";
+  cardBackdrop.classList.add("open");
+  document.getElementById("cardTitleInput").focus();
+}
+
+function closeCardModal(){ cardBackdrop.classList.remove("open"); }
+
+document.getElementById("cardModalCancel").addEventListener("click", closeCardModal);
+makeBackdropClose("cardModalBackdrop","cardModalBox", closeCardModal);
+
+document.getElementById("cardModalSave").addEventListener("click", function(){
+  var title = document.getElementById("cardTitleInput").value.trim();
+  var urlRaw = document.getElementById("cardUrlInput").value.trim();
+  var icon  = document.getElementById("cardIconInput").value.trim();
+  var cat   = document.getElementById("cardCategoryField").value;
+  var id    = document.getElementById("cardId").value;
+
+  if(!title){ document.getElementById("cardTitleInput").focus(); return; }
+
+  // URL validation via URL constructor — aman, tanpa regex escaping
+  var url = urlRaw ? normalizeUrl(urlRaw) : "#";
+
+  if(id){
+    var ex = data.items.find(function(it){ return it.id===id; });
+    if(ex){ ex.title=title; ex.url=url; ex.icon=icon; }
+  } else {
+    data.items.push({id:"c"+Date.now(), category:cat, title:title, url:url, icon:icon});
+  }
+  save(); renderSections(); closeCardModal();
+});
+
+/* ===== MODAL: KATEGORI ===== */
+var catBackdrop = document.getElementById("categoryModalBackdrop");
+
+function closeCatModal(){ catBackdrop.classList.remove("open"); }
+
+document.getElementById("addCategoryBtn").addEventListener("click", function(){
+  document.getElementById("categoryNameInput").value = "";
+  catBackdrop.classList.add("open");
+  document.getElementById("categoryNameInput").focus();
+});
+document.getElementById("categoryModalCancel").addEventListener("click", closeCatModal);
+makeBackdropClose("categoryModalBackdrop","categoryModalBox", closeCatModal);
+
+document.getElementById("categoryModalSave").addEventListener("click", function(){
+  var name = document.getElementById("categoryNameInput").value.trim();
+  if(!name){ document.getElementById("categoryNameInput").focus(); return; }
+  if(data.categories.indexOf(name)!==-1){ alert("Kategori sudah ada."); return; }
+  data.categories.push(name);
+  save(); renderSections(); closeCatModal();
+});
+
+/* ===== KEYBOARD: Esc tutup modal ===== */
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){
+    closeCardModal();
+    closeCatModal();
+  }
+});
+
+/* ===== CEK KONEKSI ===== */
+var connBanner  = document.getElementById("connBanner");
+var connMsg     = document.getElementById("connMsg");
+var connDismiss = document.getElementById("connDismiss");
+var statusDot   = document.querySelector(".statusbar .dot");
+var sbConn      = document.getElementById("sbWeather"); // fallback ref
+var dismissTimer = null;
+
+function setConnState(online){
+  if(online){
+    connBanner.className = "conn-banner online show";
+    connMsg.textContent  = "KONEKSI TERSAMBUNG — semua fitur aktif";
+    statusDot.classList.remove("dot-offline");
+    document.getElementById("sbLoc").textContent = "MAGETAN, JATIM";
+    // auto-dismiss banner online setelah 4 detik
+    clearTimeout(dismissTimer);
+    dismissTimer = setTimeout(function(){ connBanner.classList.remove("show"); }, 4000);
+  } else {
+    connBanner.className = "conn-banner offline show";
+    connMsg.textContent  = "OFFLINE — koneksi internet terputus";
+    statusDot.classList.add("dot-offline");
+    clearTimeout(dismissTimer); // banner offline tidak auto-dismiss
+  }
+}
+
+function checkConn(){
+  // navigator.onLine bisa false-positive; ping endpoint ringan untuk konfirmasi
+  if(!navigator.onLine){ setConnState(false); return; }
+  // ping open-meteo (sudah dipakai di cuaca) sebagai probe
+  fetch("https://api.open-meteo.com/v1/forecast?latitude=-7.64&longitude=111.32&current_weather=true&timezone=Asia%2FJakarta",{cache:"no-store"})
+    .then(function(r){ setConnState(r.ok); })
+    .catch(function(){ setConnState(false); });
+}
+
+connDismiss.addEventListener("click", function(){
+  clearTimeout(dismissTimer);
+  connBanner.classList.remove("show");
+});
+
+window.addEventListener("online",  function(){ checkConn(); });
+window.addEventListener("offline", function(){ setConnState(false); });
+
+// cek awal saat halaman dibuka (delay singkat agar fetch tidak bentrok dengan cuaca)
+setTimeout(checkConn, 1500);
+// cek periodik tiap 60 detik
+setInterval(checkConn, 60000);
+
+/* ===== INIT ===== */
+renderSections();
+
+})();
+</script>
+</body>
+</html>
