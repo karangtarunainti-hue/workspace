@@ -167,6 +167,41 @@
 
   footer{text-align:center;padding:34px 20px 10px;color:var(--text-faint);font-family:var(--mono);font-size:11px;letter-spacing:.04em}
 
+  /* DAFTAR TUGAS */
+  .todo-panel{background:var(--surface);border:1px solid var(--border);padding:22px 24px;margin-top:40px}
+  .todo-input-row{display:flex;gap:8px;margin-top:14px}
+  .todo-input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 12px;font-family:var(--body);font-size:14px}
+  .todo-input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .todo-add-btn{background:var(--accent);color:#11131a;border:1px solid var(--accent);font-family:var(--mono);font-size:11.5px;font-weight:600;padding:9px 16px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+  .todo-add-btn:hover{opacity:.85}
+  .todo-list{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:1px}
+  .todo-item{display:flex;align-items:center;gap:10px;background:var(--surface-2);padding:10px 12px;border:1px solid var(--border-soft)}
+  .todo-item.done .todo-label{text-decoration:line-through;color:var(--text-faint)}
+  .todo-check{width:16px;height:16px;border:1px solid var(--border);background:var(--bg);cursor:pointer;flex:none;appearance:none;-webkit-appearance:none;position:relative}
+  .todo-check:checked{background:var(--accent);border-color:var(--accent)}
+  .todo-check:checked::after{content:"✓";position:absolute;top:-1px;left:1px;font-size:11px;color:#11131a;font-weight:700}
+  .todo-label{flex:1;font-size:14px;color:var(--text);line-height:1.4}
+  .todo-del{background:none;border:none;color:var(--text-faint);font-size:14px;cursor:pointer;padding:0 4px;line-height:1}
+  .todo-del:hover{color:#e24b4a}
+  .todo-filter-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .todo-filter-btn{background:none;border:1px solid var(--border);color:var(--text-faint);font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:5px 10px;cursor:pointer}
+  .todo-filter-btn.active,.todo-filter-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .todo-empty{font-family:var(--mono);font-size:12px;color:var(--text-faint);padding:14px 0;text-align:center}
+
+  /* CATATAN */
+  .notes-panel{background:var(--surface);border:1px solid var(--border);padding:22px 24px;margin-top:40px}
+  .notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);margin-top:14px}
+  .note-card{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:8px;position:relative;min-height:120px}
+  .note-card:hover .note-del{opacity:1}
+  .note-textarea{background:transparent;border:none;color:var(--text);font-family:var(--body);font-size:13.5px;line-height:1.6;resize:none;width:100%;min-height:80px;padding:0;outline:none}
+  .note-textarea::placeholder{color:var(--text-faint)}
+  .note-footer{display:flex;align-items:center;justify-content:space-between}
+  .note-ts{font-family:var(--mono);font-size:10.5px;color:var(--text-faint)}
+  .note-del{background:none;border:none;color:var(--text-faint);font-size:13px;cursor:pointer;padding:0;opacity:0;transition:opacity .15s}
+  .note-del:hover{color:#e24b4a}
+  .note-add-tile{background:var(--surface);border:none;color:var(--text-faint);display:flex;align-items:center;justify-content:center;min-height:120px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;width:100%;cursor:pointer}
+  .note-add-tile:hover{color:var(--accent);background:var(--surface-2)}
+
   @media(max-width:760px){.info-grid{grid-template-columns:1fr}.greeting{font-size:30px}.statusbar-inner{overflow-x:auto}}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -224,6 +259,33 @@
 
   <div style="margin-top:40px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
     <button class="btn" id="addCategoryBtn">+ Tambah Kategori Baru</button>
+  </div>
+
+  <!-- PANEL DAFTAR TUGAS -->
+  <div class="todo-panel">
+    <div class="panel-head">
+      <span class="panel-title">📋 Daftar Tugas</span>
+      <button class="panel-refresh" id="todoClearDone">hapus selesai</button>
+    </div>
+    <div class="todo-input-row">
+      <input type="text" class="todo-input" id="todoInput" placeholder="Tulis tugas baru… lalu tekan Enter">
+      <button class="todo-add-btn" id="todoAddBtn">+ Tambah</button>
+    </div>
+    <div class="todo-filter-row">
+      <button class="todo-filter-btn active" data-filter="all" id="tfAll">Semua</button>
+      <button class="todo-filter-btn" data-filter="active" id="tfActive">Belum Selesai</button>
+      <button class="todo-filter-btn" data-filter="done" id="tfDone">Selesai</button>
+    </div>
+    <ul class="todo-list" id="todoList"></ul>
+    <div class="todo-empty" id="todoEmpty" style="display:none">— belum ada tugas —</div>
+  </div>
+
+  <!-- PANEL CATATAN -->
+  <div class="notes-panel">
+    <div class="panel-head">
+      <span class="panel-title">📝 Catatan</span>
+    </div>
+    <div class="notes-grid" id="notesGrid"></div>
   </div>
 
   <!-- PANEL NOTIFIKASI -->
@@ -682,6 +744,122 @@ document.getElementById("categoryModalSave").addEventListener("click",async func
 
 /* ===== ESC TUTUP MODAL ===== */
 document.addEventListener("keydown",function(e){if(e.key==="Escape"){closeCardModal();closeCatModal();}});
+
+/* ===== DAFTAR TUGAS ===== */
+var TODO_KEY = "dk_todos";
+var todoFilter = "all";
+
+function loadTodos(){ try{ return JSON.parse(localStorage.getItem(TODO_KEY)||"[]"); }catch(e){ return []; } }
+function saveTodos(arr){ localStorage.setItem(TODO_KEY, JSON.stringify(arr)); }
+
+function renderTodos(){
+  var todos = loadTodos();
+  var list = document.getElementById("todoList");
+  var empty = document.getElementById("todoEmpty");
+  var filtered = todos.filter(function(t){
+    if(todoFilter==="active") return !t.done;
+    if(todoFilter==="done")   return t.done;
+    return true;
+  });
+  list.innerHTML = "";
+  if(filtered.length===0){ empty.style.display="block"; return; }
+  empty.style.display = "none";
+  filtered.forEach(function(t){
+    var li = document.createElement("li");
+    li.className = "todo-item" + (t.done?" done":"");
+    li.innerHTML =
+      "<input type='checkbox' class='todo-check'" + (t.done?" checked":"") + " data-id='"+t.id+"'>" +
+      "<span class='todo-label'>"+esc(t.text)+"</span>" +
+      "<button class='todo-del' data-id='"+t.id+"' title='Hapus'>✕</button>";
+    li.querySelector(".todo-check").addEventListener("change", function(){
+      var arr = loadTodos();
+      var item = arr.find(function(x){ return x.id===t.id; });
+      if(item){ item.done = this.checked; saveTodos(arr); renderTodos(); }
+    });
+    li.querySelector(".todo-del").addEventListener("click", function(){
+      var arr = loadTodos().filter(function(x){ return x.id!==t.id; });
+      saveTodos(arr); renderTodos();
+    });
+    list.appendChild(li);
+  });
+}
+
+function addTodo(){
+  var input = document.getElementById("todoInput");
+  var text = input.value.trim();
+  if(!text) return;
+  var arr = loadTodos();
+  arr.push({ id: Date.now()+"", text: text, done: false, created: new Date().toISOString() });
+  saveTodos(arr); input.value = ""; renderTodos();
+}
+
+document.getElementById("todoAddBtn").addEventListener("click", addTodo);
+document.getElementById("todoInput").addEventListener("keydown", function(e){ if(e.key==="Enter") addTodo(); });
+document.getElementById("todoClearDone").addEventListener("click", function(){
+  saveTodos(loadTodos().filter(function(t){ return !t.done; })); renderTodos();
+});
+document.querySelectorAll(".todo-filter-btn").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    todoFilter = this.dataset.filter;
+    document.querySelectorAll(".todo-filter-btn").forEach(function(b){ b.classList.remove("active"); });
+    this.classList.add("active");
+    renderTodos();
+  });
+});
+renderTodos();
+
+/* ===== CATATAN ===== */
+var NOTES_KEY = "dk_notes";
+function loadNotes(){ try{ return JSON.parse(localStorage.getItem(NOTES_KEY)||"[]"); }catch(e){ return []; } }
+function saveNotes(arr){ localStorage.setItem(NOTES_KEY, JSON.stringify(arr)); }
+
+function fmtDate(iso){
+  var d = new Date(iso);
+  return pad(d.getDate())+" "+MONTHS[d.getMonth()]+" · "+pad(d.getHours())+":"+pad(d.getMinutes());
+}
+
+function renderNotes(){
+  var notes = loadNotes();
+  var grid  = document.getElementById("notesGrid");
+  grid.innerHTML = "";
+  notes.forEach(function(n){
+    var card = document.createElement("div"); card.className = "note-card";
+    var ta   = document.createElement("textarea"); ta.className = "note-textarea";
+    ta.value = n.text; ta.placeholder = "Tulis catatan…";
+    var debounce;
+    ta.addEventListener("input", function(){
+      clearTimeout(debounce);
+      debounce = setTimeout(function(){
+        var arr = loadNotes();
+        var item = arr.find(function(x){ return x.id===n.id; });
+        if(item){ item.text = ta.value; item.updated = new Date().toISOString(); saveNotes(arr); }
+        ts.textContent = fmtDate(new Date().toISOString());
+      }, 600);
+    });
+    var footer = document.createElement("div"); footer.className = "note-footer";
+    var ts = document.createElement("span"); ts.className = "note-ts"; ts.textContent = fmtDate(n.updated||n.created);
+    var del = document.createElement("button"); del.className = "note-del"; del.textContent = "✕"; del.title = "Hapus catatan";
+    del.addEventListener("click", function(){
+      if(!confirm("Hapus catatan ini?")) return;
+      saveNotes(loadNotes().filter(function(x){ return x.id!==n.id; })); renderNotes();
+    });
+    footer.appendChild(ts); footer.appendChild(del);
+    card.appendChild(ta); card.appendChild(footer);
+    grid.appendChild(card);
+  });
+  // tile tambah catatan baru
+  var addTile = document.createElement("button"); addTile.className = "note-add-tile";
+  addTile.textContent = "+ Catatan Baru";
+  addTile.addEventListener("click", function(){
+    var arr = loadNotes();
+    arr.unshift({ id: Date.now()+"", text: "", created: new Date().toISOString(), updated: new Date().toISOString() });
+    saveNotes(arr); renderNotes();
+    // fokus ke textarea pertama
+    var firstTa = document.querySelector(".note-textarea");
+    if(firstTa) firstTa.focus();
+  });
+  grid.appendChild(addTile);
+}
 
 /* ===== CEK KONEKSI ===== */
 var connBanner  = document.getElementById("connBanner");
