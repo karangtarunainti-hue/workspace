@@ -860,6 +860,160 @@ function renderNotes(){
   });
   grid.appendChild(addTile);
 }
+renderNotes();
+
+/* ===== NOTIFIKASI DESKTOP ===== */
+var NOTIF_KEY = "dk_notif_settings";
+
+var NOTIF_ITEMS = [
+  { id:"subuh",  label:"Subuh",   desc:"Pengingat waktu subuh setiap pagi.",          defaultTime:"04:15" },
+  { id:"dhuhur", label:"Dhuhur",  desc:"Pengingat shalat dhuhur di tengah hari.",     defaultTime:"11:50" },
+  { id:"ashar",  label:"Ashar",   desc:"Pengingat shalat ashar sore hari.",           defaultTime:"15:10" },
+  { id:"maghrib",label:"Maghrib", desc:"Pengingat shalat maghrib saat matahari terbenam.", defaultTime:"17:35" },
+  { id:"isya",   label:"Isya",    desc:"Pengingat shalat isya malam hari.",           defaultTime:"18:50" },
+  { id:"kerja",  label:"Mulai Kerja", desc:"Pengingat untuk memulai sesi kerja harian.", defaultTime:"08:00" },
+  { id:"istirahat",label:"Istirahat Kerja", desc:"Pengingat untuk istirahat sejenak.", defaultTime:"12:00" },
+];
+
+function loadNotifSettings(){
+  try{ return JSON.parse(localStorage.getItem(NOTIF_KEY)||"{}"); }catch(e){ return {}; }
+}
+function saveNotifSettings(obj){ localStorage.setItem(NOTIF_KEY, JSON.stringify(obj)); }
+
+function notifPermissionState(){
+  if(!("Notification" in window)) return "unsupported";
+  return Notification.permission; // "default" | "granted" | "denied"
+}
+
+function renderNotifPermBar(){
+  var bar = document.getElementById("notifPermBar");
+  var st = notifPermissionState();
+  if(st==="unsupported"){
+    bar.innerHTML = "<div class='notif-perm-bar'><span>Browser ini tidak mendukung notifikasi desktop.</span></div>";
+  } else if(st==="denied"){
+    bar.innerHTML = "<div class='notif-perm-bar'><span>Izin notifikasi diblokir. Aktifkan secara manual di pengaturan browser, lalu muat ulang halaman.</span></div>";
+  } else if(st==="default"){
+    bar.innerHTML = "<div class='notif-perm-bar'><span>Izin notifikasi belum diberikan.</span><button class='notif-perm-btn' id='notifGrantBtn'>Izinkan Notifikasi</button></div>";
+    document.getElementById("notifGrantBtn").addEventListener("click", function(){
+      Notification.requestPermission().then(function(p){
+        renderNotifPermBar();
+        renderNotifGrid();
+        if(p==="granted"){
+          document.getElementById("notifTestGlobal").style.display="";
+          scheduleAllNotifs();
+          new Notification("Dashboard Kerja", { body:"Notifikasi aktif! Semua pengingat siap berjalan.", icon:"" });
+        }
+      });
+    });
+  } else {
+    bar.innerHTML = "";
+    document.getElementById("notifTestGlobal").style.display="";
+  }
+}
+
+function renderNotifGrid(){
+  var grid = document.getElementById("notifGrid");
+  var settings = loadNotifSettings();
+  var granted = notifPermissionState()==="granted";
+  grid.innerHTML = "";
+  NOTIF_ITEMS.forEach(function(item){
+    var saved = settings[item.id] || {};
+    var enabled = saved.enabled || false;
+    var time    = saved.time || item.defaultTime;
+
+    var card = document.createElement("div"); card.className = "notif-card";
+
+    // head: label + toggle
+    var head = document.createElement("div"); head.className = "notif-card-head";
+    var title = document.createElement("span"); title.className = "notif-card-title"; title.textContent = item.label;
+    var tog = document.createElement("label"); tog.className = "notif-toggle";
+    var inp = document.createElement("input"); inp.type = "checkbox"; inp.checked = enabled;
+    var track = document.createElement("span"); track.className = "notif-toggle-track";
+    var thumb = document.createElement("span"); thumb.className = "notif-toggle-thumb";
+    tog.appendChild(inp); tog.appendChild(track); tog.appendChild(thumb);
+    head.appendChild(title); head.appendChild(tog);
+
+    // desc
+    var desc = document.createElement("div"); desc.className = "notif-card-desc"; desc.textContent = item.desc;
+
+    // time row
+    var timeRow = document.createElement("div"); timeRow.className = "notif-time-row";
+    var timeLbl = document.createElement("span"); timeLbl.className = "notif-time-label"; timeLbl.textContent = "Jam:";
+    var timeInp = document.createElement("input"); timeInp.type = "time"; timeInp.className = "notif-time-input";
+    timeInp.value = time; timeInp.disabled = !enabled || !granted;
+    timeRow.appendChild(timeLbl); timeRow.appendChild(timeInp);
+
+    // test button
+    var testBtn = document.createElement("button"); testBtn.className = "notif-test-btn";
+    testBtn.textContent = "Tes Notifikasi"; testBtn.disabled = !enabled || !granted;
+    testBtn.addEventListener("click", function(){
+      if(notifPermissionState()==="granted"){
+        new Notification("🔔 " + item.label, { body: "Ini adalah notifikasi tes untuk: " + item.label });
+      }
+    });
+
+    // save on toggle
+    inp.addEventListener("change", function(){
+      var s = loadNotifSettings();
+      if(!s[item.id]) s[item.id] = {};
+      s[item.id].enabled = this.checked;
+      s[item.id].time = timeInp.value || item.defaultTime;
+      saveNotifSettings(s);
+      timeInp.disabled = !this.checked || !granted;
+      testBtn.disabled = !this.checked || !granted;
+      scheduleAllNotifs();
+    });
+
+    // save on time change
+    timeInp.addEventListener("change", function(){
+      var s = loadNotifSettings();
+      if(!s[item.id]) s[item.id] = {};
+      s[item.id].time = this.value;
+      saveNotifSettings(s);
+      if(inp.checked) scheduleAllNotifs();
+    });
+
+    card.appendChild(head); card.appendChild(desc); card.appendChild(timeRow); card.appendChild(testBtn);
+    grid.appendChild(card);
+  });
+}
+
+// Scheduled notification timers
+var notifTimers = {};
+
+function scheduleAllNotifs(){
+  if(notifPermissionState()!=="granted") return;
+  // clear existing
+  Object.values(notifTimers).forEach(function(t){ clearTimeout(t); });
+  notifTimers = {};
+  var settings = loadNotifSettings();
+  var now = new Date();
+  NOTIF_ITEMS.forEach(function(item){
+    var saved = settings[item.id] || {};
+    if(!saved.enabled) return;
+    var timeParts = (saved.time || item.defaultTime).split(":");
+    var target = new Date();
+    target.setHours(parseInt(timeParts[0],10), parseInt(timeParts[1],10), 0, 0);
+    var diff = target - now;
+    if(diff < 0) diff += 24*60*60*1000; // next day
+    notifTimers[item.id] = setTimeout(function(){
+      new Notification("🔔 " + item.label, { body: item.desc });
+      // reschedule for tomorrow
+      notifTimers[item.id] = setTimeout(function(){ scheduleAllNotifs(); }, 500);
+    }, diff);
+  });
+}
+
+// global test button
+document.getElementById("notifTestGlobal").addEventListener("click", function(){
+  if(notifPermissionState()==="granted"){
+    new Notification("🔔 Dashboard Kerja", { body: "Semua notifikasi aktif dan berjalan normal." });
+  }
+});
+
+renderNotifPermBar();
+renderNotifGrid();
+if(notifPermissionState()==="granted") scheduleAllNotifs();
 
 /* ===== CEK KONEKSI ===== */
 var connBanner  = document.getElementById("connBanner");
