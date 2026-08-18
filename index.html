@@ -1225,8 +1225,10 @@ function renderFeed(notes){
     var html = "";
     html += '<div class="sb-card-head"><span class="sb-card-type">'+icon+' '+esc2(n.note_type||(n.status==="raw"?"memproses":"catatan"))+'</span><span class="sb-card-time">'+relTime(n.created_at)+'</span></div>';
     html += '<div class="sb-card-content">'+esc2(n.content)+'</div>';
-    if(n.status==="raw"){
-      html += '<div class="sb-card-summary sb-processing">AI sedang meringkas &amp; menghubungkan ide ini…</div>';
+    var stuck = n.status==="raw" || (n.status==="processed" && !n.summary);
+    if(stuck){
+      html += '<div class="sb-card-summary sb-processing">AI belum berhasil memproses catatan ini.</div>';
+      html += '<div class="sb-row"><button class="btn-secondary sb-reprocess-btn" data-id="'+esc2(n.id)+'">Proses ulang</button></div>';
     }
     if(n.summary){
       html += '<div class="sb-card-summary">'+esc2(n.summary)+'</div>';
@@ -1243,6 +1245,25 @@ function renderFeed(notes){
     }
     card.innerHTML = html;
     feed.appendChild(card);
+  });
+  feed.querySelectorAll(".sb-reprocess-btn").forEach(function(btn){
+    btn.addEventListener("click", async function(){
+      var id = btn.getAttribute("data-id");
+      btn.textContent = "Memproses…"; btn.disabled = true;
+      var session = (await sb2.auth.getSession()).data.session;
+      try{
+        var res = await fetch(SB2_URL+"/functions/v1/process",{
+          method:"POST",
+          headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},
+          body: JSON.stringify({note_id:id})
+        });
+        var result = await res.json();
+        if(!res.ok) throw new Error(result.error || "gagal proses ulang");
+        refreshSecondBrain();
+      }catch(e){
+        btn.textContent = "Gagal: "+e.message; btn.disabled = false;
+      }
+    });
   });
 }
 
@@ -1302,10 +1323,12 @@ $("sbTabAsk").addEventListener("click", function(){
 $("sbCaptureBtn").addEventListener("click", async function(){
   var content = $("sbContent").value.trim();
   var status = $("sbCaptureStatus");
+  var btn = $("sbCaptureBtn");
   if(!content) return;
   var session = (await sb2.auth.getSession()).data.session;
   if(!session){ status.textContent = "Harus masuk dulu."; return; }
-  status.textContent = "Menyimpan…";
+  status.textContent = "Menyimpan & memproses… (bisa beberapa detik)";
+  btn.disabled = true;
   try{
     var res = await fetch(SB2_URL+"/functions/v1/capture",{
       method:"POST",
@@ -1313,14 +1336,15 @@ $("sbCaptureBtn").addEventListener("click", async function(){
       body: JSON.stringify({content:content, source:"web"})
     });
     var result = await res.json();
-    if(!res.ok) throw new Error(result.error || "gagal simpan");
+    if(!res.ok) throw new Error(result.error || ("HTTP "+res.status));
     $("sbContent").value = "";
-    status.textContent = "Tersimpan — AI sedang mengembangkan & menghubungkan ✓";
-    refreshSecondBrain();
-    [3000,7000,14000].forEach(function(ms){ setTimeout(refreshSecondBrain, ms); });
-    setTimeout(function(){ status.textContent=""; }, 15000);
+    status.textContent = result.warning ? result.warning : "Tersimpan & sudah dikembangkan AI ✓";
+    await refreshSecondBrain();
+    setTimeout(function(){ status.textContent=""; }, 6000);
   }catch(e){
     status.textContent = "Error: "+e.message;
+  }finally{
+    btn.disabled = false;
   }
 });
 
