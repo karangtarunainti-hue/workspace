@@ -204,6 +204,45 @@
 
   @media(max-width:760px){.info-grid{grid-template-columns:1fr}.greeting{font-size:30px}.statusbar-inner{overflow-x:auto}}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* SECOND BRAIN */
+  .sb-panel{background:var(--surface);border:1px solid var(--border);padding:22px 24px;margin-top:40px}
+  .sb-authbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-size:11.5px;color:var(--text-faint);margin-top:14px;padding-bottom:14px;border-bottom:1px solid var(--border-soft)}
+  .sb-authbar .who{color:var(--accent)}
+  .sb-login{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .sb-login input{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 10px;font-family:var(--body);font-size:13.5px;flex:1;min-width:160px}
+  .sb-login input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .sb-msg{font-family:var(--mono);font-size:11.5px;color:var(--text-faint);margin-top:10px}
+  .sb-tabs{display:flex;gap:2px;background:var(--border);border:1px solid var(--border);margin-top:16px}
+  .sb-tab{flex:1;background:var(--surface);border:none;color:var(--text-faint);font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;padding:10px 8px;cursor:pointer}
+  .sb-tab.active{background:var(--surface-2);color:var(--accent)}
+  .sb-view{margin-top:16px}
+  .sb-textarea{width:100%;min-height:96px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;font-family:var(--body);font-size:14px;resize:vertical}
+  .sb-textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .sb-row{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
+  .sb-status{font-family:var(--mono);font-size:11.5px;color:var(--accent);min-height:16px}
+  .sb-answer{margin-top:14px;padding:14px 16px;border-left:2px solid var(--accent);background:var(--surface-2);font-size:13.5px;line-height:1.6;color:var(--text)}
+  .sb-sources{margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--text-faint);line-height:1.7}
+  .sb-stats{display:flex;border:1px solid var(--border);background:var(--surface-2);margin-top:16px}
+  .sb-stat{flex:1;padding:9px 8px;text-align:center;border-right:1px solid var(--border)}
+  .sb-stat:last-child{border-right:none}
+  .sb-stat-val{display:block;font-family:var(--display);font-size:17px;font-weight:700;color:var(--accent)}
+  .sb-stat-label{display:block;font-size:9.5px;font-family:var(--mono);letter-spacing:.08em;color:var(--text-faint);margin-top:2px}
+  .sb-feed{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);margin-top:18px}
+  .sb-card{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+  .sb-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .sb-card-type{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+  .sb-card-time{font-family:var(--mono);font-size:10.5px;color:var(--text-faint)}
+  .sb-card-content{font-size:13.5px;line-height:1.55;color:var(--text)}
+  .sb-card-summary{font-size:12.5px;line-height:1.55;color:var(--text-dim);font-style:italic}
+  .sb-card-insight{font-size:12.5px;line-height:1.6;color:var(--text);background:var(--accent-dim);border-left:2px solid var(--accent);padding:8px 10px}
+  .sb-card-insight b{color:var(--accent)}
+  .sb-tags{display:flex;gap:6px;flex-wrap:wrap}
+  .sb-tag{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);border:1px solid var(--border);padding:2px 8px}
+  .sb-related{font-family:var(--mono);font-size:10.5px;color:var(--text-faint)}
+  .sb-related b{color:var(--accent)}
+  .sb-empty{font-family:var(--mono);font-size:12px;color:var(--text-faint);padding:16px 0;text-align:center}
+  .sb-processing{color:var(--text-faint);font-style:italic}
 </style>
 </head>
 <body class="dp-pagi">
@@ -286,6 +325,62 @@
       <span class="panel-title">📝 Catatan</span>
     </div>
     <div class="notes-grid" id="notesGrid"></div>
+  </div>
+
+  <!-- PANEL SECOND BRAIN -->
+  <div class="sb-panel">
+    <div class="panel-head">
+      <span class="panel-title">🧠 Second Brain</span>
+      <button class="panel-refresh" id="sbRefreshBtn">muat ulang</button>
+    </div>
+
+    <div class="sb-authbar" id="sbAuthBar" style="display:none">
+      <span>Masuk sebagai <span class="who" id="sbWhoami"></span></span>
+      <button class="btn-ghost" id="sbSignOutBtn">keluar</button>
+    </div>
+
+    <div id="sbLoginGate" style="display:none">
+      <div class="sb-login">
+        <input type="email" id="sbEmail" placeholder="email" autocomplete="email">
+        <input type="password" id="sbPassword" placeholder="password" autocomplete="current-password">
+        <button class="btn-primary" id="sbLoginBtn">Masuk</button>
+        <button class="btn-secondary" id="sbSignupBtn">Daftar</button>
+      </div>
+      <div class="sb-msg" id="sbAuthMsg"></div>
+    </div>
+
+    <div id="sbAppContent" style="display:none">
+      <div class="sb-stats" id="sbStats">
+        <div class="sb-stat"><span class="sb-stat-val" id="sbStatTotal">–</span><span class="sb-stat-label">CATATAN</span></div>
+        <div class="sb-stat"><span class="sb-stat-val" id="sbStatWeek">–</span><span class="sb-stat-label">MINGGU INI</span></div>
+        <div class="sb-stat"><span class="sb-stat-val" id="sbStatLast">–</span><span class="sb-stat-label">TERAKHIR</span></div>
+      </div>
+
+      <div class="sb-tabs">
+        <button class="sb-tab active" id="sbTabCapture">Catat Ide</button>
+        <button class="sb-tab" id="sbTabAsk">Tanya</button>
+      </div>
+
+      <div class="sb-view" id="sbViewCapture">
+        <textarea class="sb-textarea" id="sbContent" placeholder="Tulis ide atau catatan mentah… AI akan meringkas, memberi tag, mencari kaitan dengan catatan lain, dan kasih masukan buat langkah berikutnya."></textarea>
+        <div class="sb-row">
+          <button class="btn-primary" id="sbCaptureBtn">Simpan &amp; Kembangkan</button>
+          <span class="sb-status" id="sbCaptureStatus"></span>
+        </div>
+      </div>
+
+      <div class="sb-view" id="sbViewAsk" style="display:none">
+        <div class="sb-row">
+          <input type="text" class="todo-input" id="sbQuestion" placeholder="Tanyakan sesuatu ke catatan-catatanmu…" style="flex:1">
+          <button class="btn-primary" id="sbAskBtn">Tanya</button>
+        </div>
+        <div class="sb-answer" id="sbAnswer" style="display:none"></div>
+        <div class="sb-sources" id="sbSources"></div>
+      </div>
+
+      <div class="sb-feed" id="sbFeed"></div>
+      <div class="sb-empty" id="sbEmpty" style="display:none">— belum ada catatan —</div>
+    </div>
   </div>
 
   <!-- PANEL NOTIFIKASI -->
@@ -1065,6 +1160,197 @@ window.addEventListener("offline",function(){setConnState(false);});
     hideOverlay();
   }
 })();
+
+})();
+</script>
+
+<!-- ===== SECOND BRAIN (project Supabase terpisah: wbijzttvsvodcztjpxyf) ===== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+var SB2_URL  = "https://wbijzttvsvodcztjpxyf.supabase.co";
+var SB2_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndiaWp6dHR2c3ZvZGN6dGpweHlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NzY4OTYsImV4cCI6MjEwMjU1Mjg5Nn0.teVQIvfhmqyh-H6FmjnuT4pYodPkoIBV-6aqe-zCkbA";
+var sb2 = window.supabase.createClient(SB2_URL, SB2_ANON);
+
+var TYPE_ICON = {idea:"💡",task:"✅",reflection:"🪞",quote:"❝",other:"🗒️"};
+
+function $(id){ return document.getElementById(id); }
+function esc2(s){ if(!s) return ""; return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function relTime(dateStr){
+  if(!dateStr) return "–";
+  var diff = Date.now() - new Date(dateStr).getTime();
+  var min = Math.floor(diff/60000);
+  if(min < 1) return "baru saja";
+  if(min < 60) return min+" menit lalu";
+  var hr = Math.floor(min/60);
+  if(hr < 24) return hr+" jam lalu";
+  var day = Math.floor(hr/24);
+  if(day < 7) return day+" hari lalu";
+  return new Date(dateStr).toLocaleDateString("id-ID",{day:"numeric",month:"short"});
+}
+
+var currentNotes = [];
+
+function renderAuthUI(session){
+  var loggedIn = !!session;
+  $("sbAuthBar").style.display = loggedIn ? "flex" : "none";
+  $("sbLoginGate").style.display = loggedIn ? "none" : "block";
+  $("sbAppContent").style.display = loggedIn ? "block" : "none";
+  if(loggedIn){
+    $("sbWhoami").textContent = session.user.email || session.user.id;
+    refreshSecondBrain();
+  }
+}
+
+function relatedFor(note, all){
+  if(!note.tags || !note.tags.length) return [];
+  return all.filter(function(o){
+    if(o.id===note.id) return false;
+    return (o.tags||[]).some(function(t){ return note.tags.indexOf(t)!==-1; });
+  }).slice(0,3);
+}
+
+function renderFeed(notes){
+  currentNotes = notes;
+  var feed = $("sbFeed");
+  feed.innerHTML = "";
+  $("sbEmpty").style.display = notes.length ? "none" : "block";
+  notes.forEach(function(n){
+    var card = document.createElement("div");
+    card.className = "sb-card";
+    var icon = TYPE_ICON[n.note_type] || "🗒️";
+    var html = "";
+    html += '<div class="sb-card-head"><span class="sb-card-type">'+icon+' '+esc2(n.note_type||(n.status==="raw"?"memproses":"catatan"))+'</span><span class="sb-card-time">'+relTime(n.created_at)+'</span></div>';
+    html += '<div class="sb-card-content">'+esc2(n.content)+'</div>';
+    if(n.status==="raw"){
+      html += '<div class="sb-card-summary sb-processing">AI sedang meringkas &amp; menghubungkan ide ini…</div>';
+    }
+    if(n.summary){
+      html += '<div class="sb-card-summary">'+esc2(n.summary)+'</div>';
+    }
+    if(n.insight){
+      html += '<div class="sb-card-insight"><b>Masukan AI:</b> '+esc2(n.insight)+'</div>';
+    }
+    if(n.tags && n.tags.length){
+      html += '<div class="sb-tags">'+n.tags.map(function(t){ return '<span class="sb-tag">#'+esc2(t)+'</span>'; }).join("")+'</div>';
+    }
+    var rel = relatedFor(n, notes);
+    if(rel.length){
+      html += '<div class="sb-related"><b>Terkait:</b> '+rel.map(function(r){ return esc2((r.summary||r.content).slice(0,40)); }).join(" · ")+'</div>';
+    }
+    card.innerHTML = html;
+    feed.appendChild(card);
+  });
+}
+
+function renderStats(notes){
+  var total = notes.length;
+  var weekAgo = Date.now() - 7*24*60*60*1000;
+  var thisWeek = notes.filter(function(n){ return new Date(n.created_at).getTime() >= weekAgo; }).length;
+  var last = notes.length ? notes[0].created_at : null;
+  $("sbStatTotal").textContent = total;
+  $("sbStatWeek").textContent = thisWeek;
+  $("sbStatLast").textContent = relTime(last);
+}
+
+async function refreshSecondBrain(){
+  var { data: notes, error } = await sb2.from("notes").select("*").order("created_at",{ascending:false}).limit(40);
+  if(error){ $("sbEmpty").style.display="block"; $("sbEmpty").textContent="Gagal memuat: "+error.message; return; }
+  notes = notes || [];
+  renderStats(notes);
+  renderFeed(notes);
+}
+
+/* ===== AUTH ===== */
+sb2.auth.getSession().then(function(res){ renderAuthUI(res.data.session); });
+sb2.auth.onAuthStateChange(function(_e, session){ renderAuthUI(session); });
+
+$("sbLoginBtn").addEventListener("click", async function(){
+  var email = $("sbEmail").value.trim(), password = $("sbPassword").value;
+  var msg = $("sbAuthMsg");
+  if(!email || !password){ msg.textContent = "Isi email dan password."; return; }
+  msg.textContent = "Masuk…";
+  var { error } = await sb2.auth.signInWithPassword({email:email, password:password});
+  msg.textContent = error ? "Error: "+error.message : "";
+});
+$("sbSignupBtn").addEventListener("click", async function(){
+  var email = $("sbEmail").value.trim(), password = $("sbPassword").value;
+  var msg = $("sbAuthMsg");
+  if(!email || !password){ msg.textContent = "Isi email dan password."; return; }
+  if(password.length < 6){ msg.textContent = "Password minimal 6 karakter."; return; }
+  msg.textContent = "Mendaftarkan…";
+  var { data, error } = await sb2.auth.signUp({email:email, password:password});
+  if(error){ msg.textContent = "Error: "+error.message; return; }
+  msg.textContent = data.session ? "" : "Akun dibuat — cek email untuk konfirmasi, lalu masuk.";
+});
+$("sbSignOutBtn").addEventListener("click", async function(){ await sb2.auth.signOut(); });
+
+/* ===== TABS ===== */
+$("sbTabCapture").addEventListener("click", function(){
+  $("sbTabCapture").classList.add("active"); $("sbTabAsk").classList.remove("active");
+  $("sbViewCapture").style.display="block"; $("sbViewAsk").style.display="none";
+});
+$("sbTabAsk").addEventListener("click", function(){
+  $("sbTabAsk").classList.add("active"); $("sbTabCapture").classList.remove("active");
+  $("sbViewAsk").style.display="block"; $("sbViewCapture").style.display="none";
+});
+
+/* ===== CAPTURE ===== */
+$("sbCaptureBtn").addEventListener("click", async function(){
+  var content = $("sbContent").value.trim();
+  var status = $("sbCaptureStatus");
+  if(!content) return;
+  var session = (await sb2.auth.getSession()).data.session;
+  if(!session){ status.textContent = "Harus masuk dulu."; return; }
+  status.textContent = "Menyimpan…";
+  try{
+    var res = await fetch(SB2_URL+"/functions/v1/capture",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},
+      body: JSON.stringify({content:content, source:"web"})
+    });
+    var result = await res.json();
+    if(!res.ok) throw new Error(result.error || "gagal simpan");
+    $("sbContent").value = "";
+    status.textContent = "Tersimpan — AI sedang mengembangkan & menghubungkan ✓";
+    refreshSecondBrain();
+    [3000,7000,14000].forEach(function(ms){ setTimeout(refreshSecondBrain, ms); });
+    setTimeout(function(){ status.textContent=""; }, 15000);
+  }catch(e){
+    status.textContent = "Error: "+e.message;
+  }
+});
+
+/* ===== ASK ===== */
+$("sbAskBtn").addEventListener("click", async function(){
+  var question = $("sbQuestion").value.trim();
+  if(!question) return;
+  var session = (await sb2.auth.getSession()).data.session;
+  if(!session){ $("sbAnswer").style.display="block"; $("sbAnswer").textContent="Harus masuk dulu."; return; }
+  $("sbAnswer").style.display="block";
+  $("sbAnswer").textContent = "Mencari di catatan…";
+  $("sbSources").innerHTML = "";
+  try{
+    var res = await fetch(SB2_URL+"/functions/v1/ask",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},
+      body: JSON.stringify({question:question})
+    });
+    var result = await res.json();
+    if(!res.ok) throw new Error(result.error || "gagal bertanya");
+    $("sbAnswer").textContent = result.answer || "Tidak ada jawaban.";
+    if(result.sources && result.sources.length){
+      $("sbSources").innerHTML = "Berdasarkan: "+result.sources.map(function(s){ return esc2((s.summary||s.content||"").slice(0,50)); }).join(" · ");
+    }
+  }catch(e){
+    $("sbAnswer").textContent = "Error: "+e.message;
+  }
+});
+
+$("sbRefreshBtn").addEventListener("click", refreshSecondBrain);
 
 })();
 </script>
